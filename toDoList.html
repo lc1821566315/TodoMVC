@@ -1,0 +1,240 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./css/index.css">
+    <script type="text/javascript" src="./lib/vue.js"></script>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <section class="todoapp">
+        <header class="header">
+            <h1>任务清单</h1>
+            <input autofocus="autofocus" autocomplete="off" placeholder="想干啥?" class="new-todo" @keyup.enter="onEnter" v-model="something">
+        </header>
+        <section class="main">
+            <input type="checkbox" class="toggle-all">
+            <ul class="todo-list" v-cloak>
+                <li class="todo" v-bind:class="{completed:item.complate,editing:item.isEdite}"  v-for="(item, index) in rendlist">
+                    <div class="view">
+                        <input type="checkbox" class="toggle" v-model="item.complate">
+                        <label @dblclick="edittodo(index)">{{item.name}}</label>
+                        <button class="destroy" v-on:click="deletetodo(index)"></button>
+                    </div>
+                    <input type="text" v-model="cacheEdit" @keyup.enter="saveEdite(index)" @keyup.esc="cancelEdite(index)" class="edit">
+                </li>
+                <!-- <h3>下面是模板</h3>
+                <li class="todo ">
+                    <div class="view">
+                        <input type="checkbox" class="toggle">
+                        <label>21</label>
+                        <button class="destroy"></button>
+                    </div>
+                    <input type="text" class="edit">
+                </li>
+                <li class="todo completed">
+                    <div class="view">
+                        <input type="checkbox" class="toggle">
+                        <label>21</label>
+                        <button class="destroy"></button>
+                    </div>
+                    <input type="text" class="edit">
+                </li>
+                <li class="todo editing">
+                        <div class="view">
+                            <input type="checkbox" class="toggle">
+                            <label>21</label>
+                            <button class="destroy"></button>
+                        </div>
+                        <input type="text" class="edit">
+                </li> -->
+            </ul>
+        </section>
+        <footer class="footer">
+            <span class="todo-count" v-if="noDonenum!=0">
+                <strong>{{noDonenum}}</strong> 项 剩余
+            </span>
+            <ul class="filters">
+                <li>
+                    <a href="#/all" :class="{selected:visibilet=='全部'}" @click="chagevisi('全部')">全部</a>
+                </li>
+                <li>
+                    <a href="#/active" :class="{selected:visibilet=='未完成'}" @click="chagevisi('未完成')">未完成</a>
+                </li>
+                <li>
+                    <a href="#/completed" :class="{selected:visibilet=='完成'}" @click="chagevisi('完成')">完成</a>
+                </li>
+            </ul>
+            <button class="clear-completed" @click='cleartodo'>
+                清空列表
+            </button>
+        </footer>
+    </section>
+    <footer class="info">
+        <p>双击进入编辑状态</p>
+        <p>鸣谢:
+            <a href="http://evanyou.me">Evan You</a>
+        </p>
+        <p>参考于
+            <a href="http://todomvc.com">TodoMVC</a>
+        </p>
+    </footer>
+
+    <script>
+        // tell the embed parent frame the height of the content
+        if (window.parent && window.parent.parent) {
+            window.parent.parent.postMessage(["resultsFrame", {
+                height: document.body.getBoundingClientRect().height,
+                slug: "4dr2fLb7"
+            }], "*")
+        }
+    </script>
+</body>
+</html>
+<script>
+    // 尝试读取值
+    let list = JSON.parse(window.localStorage.getItem('todoList'));
+    if(list){
+        // 有值
+    }else{
+        // 没值就重新赋值
+        list=[];
+    }
+
+
+
+
+    let app = new Vue({
+        el:'.todoapp',
+        data:{
+            something:'',
+            // 暂存修改的值
+            cacheEdit:'',
+            // 当前列表的筛选条件
+            visibilet:'全部',
+
+            // name 内容
+            // complate 是否完成
+            // isEdite 是否进入编辑
+            list
+            // :[
+            //     {
+            //     name:'洗碗',
+            //     complate:false,
+            //     isEdite:false
+            // },
+            // {
+            //     name:'散步',
+            //     complate:false,
+            //     isEdite:false
+            // }
+            // ]
+        },
+        methods:{
+            // 新增
+            onEnter(){
+                this.something=this.something.trim();
+                // 进来的时候判断是否为空
+                if(this.something!=''){
+                    this.list.push({
+                    name:this.something,
+                    complate:false,
+                    isEdite:false  
+                })
+                this.something='';
+                }
+            },
+            // 删除
+            deletetodo(index){
+                this.list.splice(index,1);
+            },
+            // 进入编辑状态
+            edittodo(index){
+                // 为了避免重复编辑,其他编辑状态取反(排他思想)
+                for(let i=0;i<this.list.length;i++){
+                    this.list[i].isEdite=false;
+                }
+                // console.log(index);
+                // 编辑状态取反
+                this.list[index].isEdite=!this.list[index].isEdite
+                // 取值到暂存中
+                this.cacheEdit=this.list[index].name;
+                // 赋值
+
+            },
+            // 取消编辑状态,保存修改
+            saveEdite(index){
+                // 从暂存中获值赋值到数组中
+                this.list[index].name=this.cacheEdit;
+                this.list[index].isEdite=false;   
+            },
+            // 取消编辑
+            cancelEdite(index){
+                this.list[index].isEdite=false; 
+            },
+            // 修改显示的条件
+            chagevisi(data){
+                this.visibilet=data;
+            },
+            // 清空数据(数组为空即可)
+            cleartodo(){
+                this.list=[];
+            }
+
+        },
+        // 计算属性
+        computed:{
+            noDonenum(){
+            // complate为false的总个数
+            let num = 0;
+            for(let i=0;i<this.list.length;i++){
+                if(this.list[i].complate==false){
+                    num++;
+                }
+            }
+            return num;
+            },
+            // 根据条件计算出要显示的数组
+            rendlist(){
+                let backarr = [];
+                for(let i=0;i<this.list.length;i++){
+                    switch (this.visibilet) {
+                        case '全部':
+                        backarr.push(this.list[i]);
+                            break;
+                        case '未完成':
+                        if(this.list[i].complate==false){
+                            backarr.push(this.list[i]);
+                        }
+                            break;
+                        case '完成':
+                        if(this.list[i].complate==true){
+                            backarr.push(this.list[i]);
+                        }
+                            break;
+                    }
+                }
+                return backarr;
+            }
+
+        }
+    })
+
+     // 注册页面关闭事件
+     window.onbeforeunload = function () {
+        // 保存数据
+        window.localStorage.setItem('todoList',JSON.stringify(list));
+    }
+</script>
